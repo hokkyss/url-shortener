@@ -5,13 +5,17 @@ import { AnalyticsProvider } from 'reactfire';
 const CustomAnalyticsProvider = React.memo(function CustomAnalyticsProvider({
 	children,
 }: React.PropsWithChildren) {
-	const sdk = React.useMemo(
+	const analytics = React.useMemo(
 		() => (typeof window !== 'undefined' ? getAnalytics() : null),
 		[]
 	);
 
-	if (sdk) {
-		return <AnalyticsProvider sdk={sdk}>{children}</AnalyticsProvider>;
+	React.useEffect(() => {
+		if (!analytics) return;
+	}, [analytics]);
+
+	if (analytics) {
+		return <AnalyticsProvider sdk={analytics}>{children}</AnalyticsProvider>;
 	}
 	return <React.Fragment>{children}</React.Fragment>;
 });

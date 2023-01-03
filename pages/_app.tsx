@@ -21,7 +21,6 @@ import CustomAnalyticsProvider from '~/contexts/AnalyticsProvider';
 
 function MyApp({ Component, pageProps }: AppProps) {
 	const firebaseApp = useMemo(initializeFirebaseClient, []);
-
 	return (
 		<FirebaseAppProvider firebaseApp={firebaseApp}>
 			<AuthProvider sdk={getAuth()}>
