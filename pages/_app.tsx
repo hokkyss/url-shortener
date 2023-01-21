@@ -1,13 +1,11 @@
 import type { AppProps } from 'next/app';
 import {
-	AuthProvider,
 	FirebaseAppProvider,
 	FirestoreProvider,
 	StorageProvider,
 } from 'reactfire';
 import { getFirestore } from 'firebase/firestore';
 import { useMemo } from 'react';
-import { getAuth } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
 import dynamic from 'next/dynamic';
 
@@ -16,14 +14,18 @@ import '~/styles/globals.css';
 const CustomPerformanceProvider = dynamic(
 	() => import('~/contexts/PerformanceProvider')
 );
+const CustomAnalyticsProvider = dynamic(
+	() => import('~/contexts/AnalyticsProvider')
+);
+const CustomAuthProvider = dynamic(() => import('~/contexts/AuthProvider'));
 import initializeFirebaseClient from '~/utils/common/firebaseClient';
-import CustomAnalyticsProvider from '~/contexts/AnalyticsProvider';
 
 function MyApp({ Component, pageProps }: AppProps) {
 	const firebaseApp = useMemo(initializeFirebaseClient, []);
+
 	return (
 		<FirebaseAppProvider firebaseApp={firebaseApp}>
-			<AuthProvider sdk={getAuth()}>
+			<CustomAuthProvider>
 				<StorageProvider sdk={getStorage()}>
 					<FirestoreProvider sdk={getFirestore()}>
 						<CustomAnalyticsProvider>
@@ -33,7 +35,7 @@ function MyApp({ Component, pageProps }: AppProps) {
 						</CustomAnalyticsProvider>
 					</FirestoreProvider>
 				</StorageProvider>
-			</AuthProvider>
+			</CustomAuthProvider>
 		</FirebaseAppProvider>
 	);
 }

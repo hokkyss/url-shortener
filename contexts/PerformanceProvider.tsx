@@ -1,12 +1,13 @@
 import { getPerformance } from 'firebase/performance';
 import * as React from 'react';
-import { PerformanceProvider } from 'reactfire';
+import { PerformanceProvider, useFirebaseApp } from 'reactfire';
 
 const CustomPerformanceProvider = React.memo(
 	function CustomPerformanceProvider({ children }: React.PropsWithChildren) {
+		const app = useFirebaseApp();
 		const sdk = React.useMemo(
-			() => (typeof window !== 'undefined' ? getPerformance() : null),
-			[]
+			() => (typeof window !== 'undefined' ? getPerformance(app) : null),
+			[app]
 		);
 
 		if (sdk) {

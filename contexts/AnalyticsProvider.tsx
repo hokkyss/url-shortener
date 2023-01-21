@@ -1,13 +1,14 @@
 import { getAnalytics } from 'firebase/analytics';
 import * as React from 'react';
-import { AnalyticsProvider } from 'reactfire';
+import { AnalyticsProvider, useFirebaseApp } from 'reactfire';
 
 const CustomAnalyticsProvider = React.memo(function CustomAnalyticsProvider({
 	children,
 }: React.PropsWithChildren) {
+	const app = useFirebaseApp();
 	const analytics = React.useMemo(
-		() => (typeof window !== 'undefined' ? getAnalytics() : null),
-		[]
+		() => (typeof window !== 'undefined' ? getAnalytics(app) : null),
+		[app]
 	);
 
 	React.useEffect(() => {

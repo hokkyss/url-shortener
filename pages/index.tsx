@@ -2,10 +2,14 @@ import * as React from 'react';
 import type { NextPage } from 'next';
 import Head from 'next/head';
 import Image from 'next/image';
+import { useAuth } from 'reactfire';
+import { signOut } from 'firebase/auth';
 
 import styles from '~/styles/Home.module.css';
 
 const Home: NextPage = () => {
+	const auth = useAuth();
+
 	return (
 		<div className={styles.container}>
 			<Head>
@@ -43,15 +47,12 @@ const Home: NextPage = () => {
 						<p>Discover and deploy boilerplate example Next.js projects.</p>
 					</a>
 
-					<a
-						href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-						className={styles.card}
-					>
+					<button className={styles.card} onClick={() => signOut(auth)}>
 						<h2>Deploy &rarr;</h2>
 						<p>
 							Instantly deploy your Next.js site to a public URL with Vercel.
 						</p>
-					</a>
+					</button>
 				</div>
 			</main>
 
