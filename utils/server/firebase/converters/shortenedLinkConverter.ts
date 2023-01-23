@@ -1,11 +1,11 @@
-import { FirestoreDataConverter, Timestamp } from 'firebase/firestore';
+import * as admin from 'firebase-admin';
 
 export default {
-	fromFirestore(snapshot, options) {
-		const data = snapshot.data(options);
+	fromFirestore(snapshot) {
+		const data = snapshot.data();
 		return {
 			clicks: data.clicks,
-			createdAt: (data.createdAt as Timestamp).toDate(),
+			createdAt: (data.createdAt as admin.firestore.Timestamp).toDate(),
 			from: data.from,
 			title: data.title,
 			to: new URL(data.to),
@@ -16,12 +16,12 @@ export default {
 		return {
 			clicks: modelObject.clicks,
 			createdAt: modelObject.createdAt
-				? Timestamp.fromDate(modelObject.createdAt as Date)
-				: Timestamp.now(),
+				? admin.firestore.Timestamp.fromDate(modelObject.createdAt as Date)
+				: admin.firestore.Timestamp.now(),
 			from: modelObject.from,
 			title: modelObject.title,
 			to: modelObject.to ? (modelObject.to as URL).toString() : '',
 			uid: modelObject.uid,
 		};
 	},
-} as FirestoreDataConverter<ShortenedLink>;
+} as admin.firestore.FirestoreDataConverter<ShortenedLink>;

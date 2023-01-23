@@ -1,10 +1,9 @@
 import * as admin from 'firebase-admin';
-import { getApp, getApps, initializeApp } from 'firebase-admin/app';
 
 export default function initializeFirebaseAdmin() {
-	if (getApps().length > 0) return getApp();
+	if (admin.apps.length > 0) return admin.app();
 
-	return initializeApp({
+	return admin.initializeApp({
 		credential: admin.credential.cert({
 			projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
 			clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
