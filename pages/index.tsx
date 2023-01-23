@@ -2,10 +2,12 @@ import * as React from 'react';
 import type { NextPage } from 'next';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
-import { useAuth } from 'reactfire';
+import { useAuth, useFirestore } from 'reactfire';
 import { signOut } from 'firebase/auth';
+import { addDoc, collection } from 'firebase/firestore';
 import Link from '@mui/material/Link';
 import CircularProgress from '@mui/material/CircularProgress';
+import { AlertProps, Snackbar, Alert } from '@mui/material';
 
 const NextLink = dynamic(() => import('next/link'));
 const InputAdornment = dynamic(() => import('@mui/material/InputAdornment'));
@@ -16,12 +18,24 @@ const Container = dynamic(() => import('@mui/material/Container'));
 const Box = dynamic(() => import('@mui/material/Box'));
 
 import styles from '~/styles/Home.module.css';
+import shortenedLinkConverter from '~/utils/client/firebase/converters/shortenedLinkConverter';
 
 const Home: NextPage = () => {
 	const auth = useAuth();
+	const firestore = useFirestore();
+	const collectionRef = React.useRef(
+		collection(firestore, 'shortenedLinks').withConverter(
+			shortenedLinkConverter
+		)
+	);
 	const [signingOut, setSigningOut] = React.useState(false);
 	const [destination, setDestination] = React.useState('');
 	const [shortLink, setShortLink] = React.useState('');
+	const [title, setTitle] = React.useState('');
+	const [alertProps, setAlertProps] = React.useState<{
+		severity: AlertProps['severity'];
+		text: string;
+	}>({ severity: 'success', text: '' });
 
 	const onSignOut: React.MouseEventHandler<HTMLButtonElement> =
 		React.useCallback(() => {
@@ -31,11 +45,65 @@ const Home: NextPage = () => {
 			});
 		}, [auth]);
 
+	const onSubmit: React.FormEventHandler<HTMLFormElement> = React.useCallback(
+		async (e) => {
+			e.preventDefault();
+			try {
+				new URL(destination);
+				await Promise.all([
+					addDoc(collectionRef.current, {
+						clicks: 0,
+						createdAt: new Date(),
+						from: shortLink,
+						to: new URL(destination),
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						uid: auth.currentUser!.uid,
+						title: title,
+					}),
+					navigator.clipboard.writeText(`${location.origin}/${shortLink}`),
+				]);
+				setDestination('');
+				setShortLink('');
+				setTitle('');
+				setAlertProps({
+					severity: 'success',
+					text: 'Link created and copied to clipboard!',
+				});
+			} catch (e) {
+				if (e instanceof TypeError) {
+					setAlertProps({
+						severity: 'error',
+						text: 'Invalid URL!',
+					});
+				} else {
+					setAlertProps({
+						severity: 'error',
+						text: 'Something went wrong.',
+					});
+				}
+			}
+		},
+		[destination, shortLink, title, auth]
+	);
+
 	return (
 		<React.Fragment>
 			<Head>
 				<title>Link Shortener</title>
 			</Head>
+			<Snackbar
+				open={!!alertProps.text}
+				autoHideDuration={2000}
+				onClose={() => setAlertProps({ ...alertProps, text: '' })}
+			>
+				<Alert
+					onClose={() => setAlertProps({ ...alertProps, text: '' })}
+					severity={alertProps.severity}
+					sx={{ width: '100%' }}
+				>
+					{alertProps.text}
+				</Alert>
+			</Snackbar>
 			<Container
 				sx={{
 					height: '100vh',
@@ -95,7 +163,7 @@ const Home: NextPage = () => {
 					paddingX={30}
 					paddingY={20}
 				>
-					<form className={styles.form}>
+					<form className={styles.form} onSubmit={onSubmit}>
 						<TextField
 							required
 							label="Destination"
@@ -132,7 +200,23 @@ const Home: NextPage = () => {
 								),
 							}}
 						/>
+						<TextField
+							required
+							label="Title"
+							variant="filled"
+							color="primary"
+							value={title}
+							onChange={(e) => setTitle(e.target.value)}
+							sx={{
+								backgroundColor: 'Background',
+								borderRadius: 1,
+								width: '100%',
+								marginY: 1,
+							}}
+							placeholder="Google"
+						/>
 						<Button
+							type="submit"
 							variant="outlined"
 							sx={{
 								backgroundColor: 'Background',
