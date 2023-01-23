@@ -16,7 +16,7 @@ module.exports = (phase, { defaultConfig }) => {
 		},
 	};
 
-	if (phase === CONSTANTS.PHASE_PRODUCTION_BUILD) {
+	if (phase === CONSTANTS.PHASE_DEVELOPMENT_SERVER) {
 		return withBundleAnalyzer(nextConfig);
 	}
 	return nextConfig;

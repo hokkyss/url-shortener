@@ -5,10 +5,15 @@ import {
 	StorageProvider,
 } from 'reactfire';
 import { getFirestore } from 'firebase/firestore';
-import { useMemo } from 'react';
+import * as React from 'react';
 import { getStorage } from 'firebase/storage';
 import dynamic from 'next/dynamic';
 
+import '@fontsource/roboto/300.css';
+import '@fontsource/roboto/400.css';
+import '@fontsource/roboto/500.css';
+import '@fontsource/roboto/700.css';
+import '@fontsource/public-sans';
 import '~/styles/globals.css';
 
 const CustomPerformanceProvider = dynamic(
@@ -21,7 +26,7 @@ const CustomAuthProvider = dynamic(() => import('~/contexts/AuthProvider'));
 import initializeFirebaseClient from '~/utils/common/firebaseClient';
 
 function MyApp({ Component, pageProps }: AppProps) {
-	const firebaseApp = useMemo(initializeFirebaseClient, []);
+	const firebaseApp = React.useMemo(initializeFirebaseClient, []);
 
 	return (
 		<FirebaseAppProvider firebaseApp={firebaseApp}>

@@ -13,10 +13,6 @@ const CustomAuthProvider = React.memo(function CustomAuthProvider({
 		const unsubscribe = auth.onAuthStateChanged((user) => {
 			if (user) {
 				Router.replace('/');
-			} else {
-				const ssoURL = new URL('https://sso.hokkyss.com/signin');
-				ssoURL.searchParams.set('next', 'linkShortener');
-				location.assign(ssoURL);
 			}
 		});
 
