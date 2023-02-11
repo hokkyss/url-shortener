@@ -1,26 +1,32 @@
 import * as React from 'react';
-import type { NextPage } from 'next';
+import type {
+	GetServerSideProps,
+	InferGetServerSidePropsType,
+	NextPage,
+} from 'next';
 import dynamic from 'next/dynamic';
 import Router from 'next/router';
 import { useAuth } from 'reactfire';
-import { signInWithCustomToken } from 'firebase/auth';
+import { getAuth, signInWithCustomToken } from 'firebase/auth';
 import CircularProgress from '@mui/material/CircularProgress';
+
+import initializeFirebaseClient from '~/utils/common/firebaseClient';
 
 const Box = dynamic(() => import('@mui/material/Box'));
 
-const LoginHandler: NextPage = () => {
+const LoginHandler: NextPage<
+	InferGetServerSidePropsType<typeof getServerSideProps>
+> = ({ customToken }) => {
 	const auth = useAuth();
 
 	React.useEffect(() => {
-		const token = Router.query.token;
-
-		if (auth.currentUser || typeof token !== 'string') {
+		if (auth.currentUser) {
 			Router.replace('/');
 			return;
 		}
 
-		signInWithCustomToken(auth, token);
-	}, [auth]);
+		signInWithCustomToken(auth, customToken);
+	}, [auth, customToken]);
 
 	return (
 		<Box
@@ -34,6 +40,31 @@ const LoginHandler: NextPage = () => {
 			<CircularProgress />
 		</Box>
 	);
+};
+
+export const getServerSideProps: GetServerSideProps<{
+	customToken: string;
+}> = async function (ctx) {
+	const customToken = ctx.query.token;
+	const firebaseApp = initializeFirebaseClient();
+	const auth = getAuth(firebaseApp);
+
+	if (typeof customToken !== 'string') {
+		return {
+			redirect: '/',
+			notFound: true,
+		};
+	}
+
+	if (!auth.currentUser) {
+		await signInWithCustomToken(auth, customToken);
+	}
+
+	return {
+		props: {
+			customToken: customToken,
+		},
+	};
 };
 
 export default LoginHandler;
