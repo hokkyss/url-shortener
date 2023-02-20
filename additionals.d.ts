@@ -6,3 +6,8 @@ declare interface ShortenedLink {
 	to: URL;
 	uid: string;
 }
+
+declare interface AccessToken {
+	customToken: string
+	used: boolean
+}

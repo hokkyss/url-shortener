@@ -5,29 +5,18 @@ import type {
 	NextPage,
 } from 'next';
 import dynamic from 'next/dynamic';
-import Router from 'next/router';
-import { useAuth } from 'reactfire';
 import { getAuth, signInWithCustomToken } from 'firebase/auth';
+import { doc, getDoc, getFirestore, setDoc } from 'firebase/firestore';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import initializeFirebaseClient from '~/utils/common/firebaseClient';
+import initializeFirebaseClient from '~/utils/common/firebase/firebaseClient';
+import accessTokenConverter from '~/utils/common/firebase/converters/accessTokenConverter';
 
 const Box = dynamic(() => import('@mui/material/Box'));
 
 const LoginHandler: NextPage<
 	InferGetServerSidePropsType<typeof getServerSideProps>
-> = ({ customToken }) => {
-	const auth = useAuth();
-
-	React.useEffect(() => {
-		if (auth.currentUser) {
-			Router.replace('/');
-			return;
-		}
-
-		signInWithCustomToken(auth, customToken);
-	}, [auth, customToken]);
-
+> = () => {
 	return (
 		<Box
 			display="flex"
@@ -42,27 +31,50 @@ const LoginHandler: NextPage<
 	);
 };
 
-export const getServerSideProps: GetServerSideProps<{
-	customToken: string;
-}> = async function (ctx) {
-	const customToken = ctx.query.token;
-	const firebaseApp = initializeFirebaseClient();
-	const auth = getAuth(firebaseApp);
-
-	if (typeof customToken !== 'string') {
+export const getServerSideProps: GetServerSideProps = async function (ctx) {
+	const accessToken = ctx.query.accessToken;
+	if (typeof accessToken !== 'string') {
 		return {
-			redirect: '/',
-			notFound: true,
+			redirect: {
+				destination: '/',
+				permanent: false,
+			},
 		};
 	}
 
-	if (!auth.currentUser) {
-		await signInWithCustomToken(auth, customToken);
+	const firebaseApp = initializeFirebaseClient();
+	const firestore = getFirestore(firebaseApp);
+	const auth = getAuth(firebaseApp);
+
+	if (auth.currentUser) {
+		return {
+			redirect: {
+				destination: '/',
+				permanent: false,
+			},
+		};
 	}
 
+	const documentRef = doc(firestore, 'accessTokens', accessToken).withConverter(
+		accessTokenConverter
+	);
+
+	try {
+		const accessTokenSnapshot = await getDoc(documentRef);
+
+		if (!accessTokenSnapshot.exists() || accessTokenSnapshot.data().used) {
+			throw new Error('Not Found');
+		}
+
+		const customToken = accessTokenSnapshot.data().customToken;
+		await signInWithCustomToken(auth, customToken);
+		await setDoc(documentRef, { used: true }, { merge: true });
+	} catch {}
+
 	return {
-		props: {
-			customToken: customToken,
+		redirect: {
+			destination: '/',
+			permanent: false,
 		},
 	};
 };

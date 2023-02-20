@@ -23,7 +23,7 @@ const CustomAnalyticsProvider = dynamic(
 	() => import('~/contexts/AnalyticsProvider')
 );
 const CustomAuthProvider = dynamic(() => import('~/contexts/AuthProvider'));
-import initializeFirebaseClient from '~/utils/common/firebaseClient';
+import initializeFirebaseClient from '~/utils/common/firebase/firebaseClient';
 
 function MyApp({ Component, pageProps }: AppProps) {
 	const firebaseApp = React.useMemo(initializeFirebaseClient, []);
@@ -31,8 +31,8 @@ function MyApp({ Component, pageProps }: AppProps) {
 	return (
 		<FirebaseAppProvider firebaseApp={firebaseApp}>
 			<CustomAuthProvider>
-				<StorageProvider sdk={getStorage()}>
-					<FirestoreProvider sdk={getFirestore()}>
+				<StorageProvider sdk={getStorage(firebaseApp)}>
+					<FirestoreProvider sdk={getFirestore(firebaseApp)}>
 						<CustomAnalyticsProvider>
 							<CustomPerformanceProvider>
 								<Component {...pageProps} />
