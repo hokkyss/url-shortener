@@ -71,7 +71,6 @@
 			"prettier/prettier": "error",
 			"camelcase": "error",
 			"no-console": "error",
-			"no-unused-vars": "warn",
 			"no-unused-labels": "warn",
 			"no-else-return": "warn",
 			"no-alert": "error",
