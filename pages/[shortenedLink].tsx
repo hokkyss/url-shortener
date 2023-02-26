@@ -6,8 +6,10 @@ import type {
 } from 'next';
 import * as admin from 'firebase-admin';
 
-import initializeFirebaseAdmin from '~/utils/server/firebase/initializeAdmin';
-import shortenedLinkConverter from '~/utils/server/firebase/converters/shortenedLinkConverter';
+import {
+	initializeFirebaseAdmin,
+	shortenedLinkConverter,
+} from '~/lib/server/firebase';
 
 const RedirectLink: NextPage<
 	InferGetServerSidePropsType<typeof getServerSideProps>

@@ -16,6 +16,8 @@ import '@fontsource/roboto/700.css';
 import '@fontsource/public-sans';
 import '~/styles/globals.css';
 
+import { initializeFirebaseClient } from '~/lib/common/firebase';
+
 const CustomPerformanceProvider = dynamic(
 	() => import('~/contexts/PerformanceProvider')
 );
@@ -23,7 +25,6 @@ const CustomAnalyticsProvider = dynamic(
 	() => import('~/contexts/AnalyticsProvider')
 );
 const CustomAuthProvider = dynamic(() => import('~/contexts/AuthProvider'));
-import initializeFirebaseClient from '~/utils/common/firebase/firebaseClient';
 
 function MyApp({ Component, pageProps }: AppProps) {
 	const firebaseApp = React.useMemo(initializeFirebaseClient, []);

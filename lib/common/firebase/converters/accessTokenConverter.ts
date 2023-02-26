@@ -1,6 +1,6 @@
 import { FirestoreDataConverter } from 'firebase/firestore';
 
-const accessTokenConverter: FirestoreDataConverter<AccessToken> = {
+export const accessTokenConverter: FirestoreDataConverter<AccessToken> = {
 	fromFirestore(snapshot, options) {
 		const data = snapshot.data(options);
 
@@ -16,5 +16,3 @@ const accessTokenConverter: FirestoreDataConverter<AccessToken> = {
 		};
 	},
 };
-
-export default accessTokenConverter;

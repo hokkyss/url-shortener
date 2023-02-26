@@ -1,6 +1,6 @@
 import * as admin from 'firebase-admin';
 
-export default function initializeFirebaseAdmin() {
+export function initializeFirebaseAdmin() {
 	if (admin.apps.length > 0) return admin.app();
 
 	return admin.initializeApp({

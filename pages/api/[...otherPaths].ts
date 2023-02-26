@@ -1,5 +1,5 @@
 import type { NextApiHandler } from 'next';
-import initializeFirebaseAdmin from '~/utils/server/firebase/initializeAdmin';
+import { initializeFirebaseAdmin } from '~/lib/server/firebase';
 
 initializeFirebaseAdmin();
 

@@ -1,13 +1,16 @@
 import * as React from 'react';
-import type { NextPage } from 'next';
+import type {
+	GetServerSideProps,
+	InferGetServerSidePropsType,
+	NextPage,
+} from 'next';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
-import { useAuth, useFirestore } from 'reactfire';
-import { signOut } from 'firebase/auth';
-import { addDoc, collection } from 'firebase/firestore';
 import Link from '@mui/material/Link';
 import CircularProgress from '@mui/material/CircularProgress';
-import { AlertProps, Snackbar, Alert } from '@mui/material';
+import Snackbar from '@mui/material/Snackbar';
+import Alert, { AlertProps } from '@mui/material/Alert';
+import * as admin from 'firebase-admin';
 
 const NextLink = dynamic(() => import('next/link'));
 const InputAdornment = dynamic(() => import('@mui/material/InputAdornment'));
@@ -18,16 +21,15 @@ const Container = dynamic(() => import('@mui/material/Container'));
 const Box = dynamic(() => import('@mui/material/Box'));
 
 import styles from '~/styles/Home.module.css';
-import shortenedLinkConverter from '~/utils/client/firebase/converters/shortenedLinkConverter';
 
-const Home: NextPage = () => {
-	const auth = useAuth();
-	const firestore = useFirestore();
-	const collectionRef = React.useRef(
-		collection(firestore, 'shortenedLinks').withConverter(
-			shortenedLinkConverter
-		)
-	);
+import { shortenLink, signOut } from '~/lib/common/api';
+import { SESSION_COOKIE_NAME } from '~/lib/common/constants';
+import { getCookie } from '~/lib/server/cookies';
+import { initializeFirebaseAdmin } from '~/lib/server/firebase';
+
+const Home: NextPage<
+	InferGetServerSidePropsType<typeof getServerSideProps>
+> = () => {
 	const [signingOut, setSigningOut] = React.useState(false);
 	const [destination, setDestination] = React.useState('');
 	const [shortLink, setShortLink] = React.useState('');
@@ -40,10 +42,10 @@ const Home: NextPage = () => {
 	const onSignOut: React.MouseEventHandler<HTMLButtonElement> =
 		React.useCallback(() => {
 			setSigningOut(true);
-			signOut(auth).finally(() => {
+			signOut().finally(() => {
 				setSigningOut(false);
 			});
-		}, [auth]);
+		}, []);
 
 	const onSubmit: React.FormEventHandler<HTMLFormElement> = React.useCallback(
 		async (e) => {
@@ -51,16 +53,10 @@ const Home: NextPage = () => {
 			try {
 				new URL(destination);
 				await Promise.all([
-					addDoc(collectionRef.current, {
-						clicks: 0,
-						createdAt: new Date(),
-						from: shortLink,
-						to: new URL(destination),
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						uid: auth.currentUser!.uid,
-						title: title,
-					}),
-					navigator.clipboard.writeText(`${location.origin}/${shortLink}`),
+					shortenLink(shortLink, destination, title),
+					navigator.clipboard.writeText(
+						`${location.origin}/${shortLink}`.toString()
+					),
 				]);
 				setDestination('');
 				setShortLink('');
@@ -83,7 +79,7 @@ const Home: NextPage = () => {
 				}
 			}
 		},
-		[destination, shortLink, title, auth]
+		[destination, shortLink, title]
 	);
 
 	return (
@@ -118,7 +114,8 @@ const Home: NextPage = () => {
 				<Typography textAlign="center" variant="h3">
 					by hokkyss
 				</Typography>
-				{auth.currentUser ? (
+				{
+					/* {auth.currentUser ? (
 					<React.Fragment>
 						<Typography textAlign="center" sx={{ marginY: 2 }}>
 							Signed in as {auth.currentUser.email}
@@ -137,7 +134,7 @@ const Home: NextPage = () => {
 							Sign Out
 						</Button>
 					</React.Fragment>
-				) : (
+				) : ( */
 					<React.Fragment>
 						<Typography textAlign="center" sx={{ marginY: 2 }}>
 							<Link
@@ -152,9 +149,10 @@ const Home: NextPage = () => {
 							to use Link Shortener!
 						</Typography>
 					</React.Fragment>
-				)}
+					// )
+				}
 			</Container>
-			{auth.currentUser && (
+			{/* {auth.currentUser && (
 				<Box
 					sx={{
 						backgroundColor: 'black',
@@ -227,9 +225,43 @@ const Home: NextPage = () => {
 						</Button>
 					</form>
 				</Box>
-			)}
+			)} */}
 		</React.Fragment>
 	);
+};
+
+export const getServerSideProps: GetServerSideProps<
+	{ signedIn: true; user: object } | { signedIn: false; user: null }
+> = async function (ctx) {
+	const firebaseAdmin = initializeFirebaseAdmin();
+
+	const sessionCookie = getCookie<string>(
+		ctx.req,
+		ctx.res,
+		SESSION_COOKIE_NAME
+	);
+
+	try {
+		const decoded = await admin
+			.auth(firebaseAdmin)
+			.verifySessionCookie(sessionCookie || '');
+
+		const user = await admin.auth(firebaseAdmin).getUser(decoded.uid);
+
+		return {
+			props: {
+				signedIn: true,
+				user: user,
+			},
+		};
+	} catch {
+		return {
+			props: {
+				signedIn: false,
+				user: null,
+			},
+		};
+	}
 };
 
 export default Home;

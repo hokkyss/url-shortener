@@ -1,6 +1,6 @@
 import { getApp, getApps, initializeApp } from 'firebase/app';
 
-export default function initializeFirebaseClient() {
+export function initializeFirebaseClient() {
 	if (getApps().length > 0) return getApp();
 
 	return initializeApp({

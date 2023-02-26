@@ -5,12 +5,8 @@ import type {
 	NextPage,
 } from 'next';
 import dynamic from 'next/dynamic';
-import { getAuth, signInWithCustomToken } from 'firebase/auth';
-import { doc, getDoc, getFirestore, setDoc } from 'firebase/firestore';
 import CircularProgress from '@mui/material/CircularProgress';
-
-import initializeFirebaseClient from '~/utils/common/firebase/firebaseClient';
-import accessTokenConverter from '~/utils/common/firebase/converters/accessTokenConverter';
+import { signIn } from '~/lib/server/api';
 
 const Box = dynamic(() => import('@mui/material/Box'));
 
@@ -42,34 +38,7 @@ export const getServerSideProps: GetServerSideProps = async function (ctx) {
 		};
 	}
 
-	const firebaseApp = initializeFirebaseClient();
-	const firestore = getFirestore(firebaseApp);
-	const auth = getAuth(firebaseApp);
-
-	if (auth.currentUser) {
-		return {
-			redirect: {
-				destination: '/',
-				permanent: false,
-			},
-		};
-	}
-
-	const documentRef = doc(firestore, 'accessTokens', accessToken).withConverter(
-		accessTokenConverter
-	);
-
-	try {
-		const accessTokenSnapshot = await getDoc(documentRef);
-
-		if (!accessTokenSnapshot.exists() || accessTokenSnapshot.data().used) {
-			throw new Error('Not Found');
-		}
-
-		const customToken = accessTokenSnapshot.data().customToken;
-		await signInWithCustomToken(auth, customToken);
-		await setDoc(documentRef, { used: true }, { merge: true });
-	} catch {}
+	await signIn(accessToken);
 
 	return {
 		redirect: {
