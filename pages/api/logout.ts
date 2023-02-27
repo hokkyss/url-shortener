@@ -6,7 +6,7 @@ import { deleteCookie } from '~/lib/server/cookies';
 const handler: NextApiHandler = async function (req, res) {
 	deleteCookie(req, res, SESSION_COOKIE_NAME);
 	deleteCookie(req, res, CSRF_COOKIE_NAME);
-	return res.status(204).json({});
+	return res.status(204).end();
 };
 
 export default handler;

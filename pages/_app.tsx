@@ -1,4 +1,4 @@
-import type { AppProps } from 'next/app';
+import type { AppType } from 'next/app';
 import {
 	FirebaseAppProvider,
 	FirestoreProvider,
@@ -26,7 +26,7 @@ const CustomAnalyticsProvider = dynamic(
 );
 const CustomAuthProvider = dynamic(() => import('~/contexts/AuthProvider'));
 
-function MyApp({ Component, pageProps }: AppProps) {
+const MyApp: AppType = function MyApp({ Component, pageProps }) {
 	const firebaseApp = React.useMemo(initializeFirebaseClient, []);
 
 	return (
@@ -44,6 +44,6 @@ function MyApp({ Component, pageProps }: AppProps) {
 			</CustomAuthProvider>
 		</FirebaseAppProvider>
 	);
-}
+};
 
 export default MyApp;

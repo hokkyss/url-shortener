@@ -12,13 +12,18 @@ export const getCustomToken = async (accessToken: string) => {
 	const documentRef = doc(firestore, 'accessTokens', accessToken).withConverter(
 		accessTokenConverter
 	);
-	const accessTokenSnapshot = await getDoc(documentRef);
-	const data = accessTokenSnapshot.data();
 
-	if (!accessTokenSnapshot.exists() || data?.used || !data?.customToken) {
+	try {
+		const accessTokenSnapshot = await getDoc(documentRef);
+		const data = accessTokenSnapshot.data();
+
+		if (!accessTokenSnapshot.exists() || data?.used || !data?.customToken) {
+			return '';
+		}
+
+		await setDoc(documentRef, { used: true }, { merge: true });
+		return data.customToken;
+	} catch {
 		return '';
 	}
-
-	await setDoc(documentRef, { used: true }, { merge: true });
-	return data.customToken;
 };

@@ -12,8 +12,10 @@ const handler: NextApiHandler<{ detail: string }> = async function (req, res) {
 	if (req.method !== 'POST') {
 		return res.redirect('/api/not-found');
 	}
-	const sessionCookie = getCookie<string>(req, res, SESSION_COOKIE_NAME);
-	const csrf = getCookie<string>(req, res, CSRF_COOKIE_NAME);
+	const [sessionCookie, csrf] = await Promise.all([
+		getCookie<string>(req, res, SESSION_COOKIE_NAME),
+		getCookie<string>(req, res, CSRF_COOKIE_NAME),
+	]);
 	if (!csrf || !sessionCookie) {
 		return res.status(401).json({ detail: 'Unauthorized' });
 	}

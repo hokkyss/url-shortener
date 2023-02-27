@@ -6,13 +6,14 @@ import type {
 } from 'next';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
+import NextLink from 'next/link';
+import Router from 'next/router';
 import Link from '@mui/material/Link';
 import CircularProgress from '@mui/material/CircularProgress';
 import Snackbar from '@mui/material/Snackbar';
 import Alert, { AlertProps } from '@mui/material/Alert';
 import * as admin from 'firebase-admin';
 
-const NextLink = dynamic(() => import('next/link'));
 const InputAdornment = dynamic(() => import('@mui/material/InputAdornment'));
 const TextField = dynamic(() => import('@mui/material/TextField'));
 const Button = dynamic(() => import('@mui/material/Button'));
@@ -29,7 +30,7 @@ import { initializeFirebaseAdmin } from '~/lib/server/firebase';
 
 const Home: NextPage<
 	InferGetServerSidePropsType<typeof getServerSideProps>
-> = () => {
+> = ({ signedIn, user, host }) => {
 	const [signingOut, setSigningOut] = React.useState(false);
 	const [destination, setDestination] = React.useState('');
 	const [shortLink, setShortLink] = React.useState('');
@@ -44,6 +45,7 @@ const Home: NextPage<
 			setSigningOut(true);
 			signOut().finally(() => {
 				setSigningOut(false);
+				Router.replace(Router.asPath);
 			});
 		}, []);
 
@@ -54,9 +56,7 @@ const Home: NextPage<
 				new URL(destination);
 				await Promise.all([
 					shortenLink(shortLink, destination, title),
-					navigator.clipboard.writeText(
-						`${location.origin}/${shortLink}`.toString()
-					),
+					navigator.clipboard.writeText(`${location.origin}/${shortLink}`),
 				]);
 				setDestination('');
 				setShortLink('');
@@ -114,11 +114,10 @@ const Home: NextPage<
 				<Typography textAlign="center" variant="h3">
 					by hokkyss
 				</Typography>
-				{
-					/* {auth.currentUser ? (
+				{signedIn ? (
 					<React.Fragment>
 						<Typography textAlign="center" sx={{ marginY: 2 }}>
-							Signed in as {auth.currentUser.email}
+							Signed in as {user.email}
 						</Typography>
 						<Button
 							sx={{ marginX: 'auto', display: 'flex' }}
@@ -134,7 +133,7 @@ const Home: NextPage<
 							Sign Out
 						</Button>
 					</React.Fragment>
-				) : ( */
+				) : (
 					<React.Fragment>
 						<Typography textAlign="center" sx={{ marginY: 2 }}>
 							<Link
@@ -149,10 +148,9 @@ const Home: NextPage<
 							to use Link Shortener!
 						</Typography>
 					</React.Fragment>
-					// )
-				}
+				)}
 			</Container>
-			{/* {auth.currentUser && (
+			{signedIn && (
 				<Box
 					sx={{
 						backgroundColor: 'black',
@@ -192,9 +190,7 @@ const Home: NextPage<
 							onChange={(e) => setShortLink(e.target.value)}
 							InputProps={{
 								startAdornment: (
-									<InputAdornment position="start">
-										{location.host}/
-									</InputAdornment>
+									<InputAdornment position="start">{host}/</InputAdornment>
 								),
 							}}
 						/>
@@ -225,17 +221,18 @@ const Home: NextPage<
 						</Button>
 					</form>
 				</Box>
-			)} */}
+			)}
 		</React.Fragment>
 	);
 };
 
 export const getServerSideProps: GetServerSideProps<
-	{ signedIn: true; user: object } | { signedIn: false; user: null }
+	| { signedIn: true; host: string; user: User }
+	| { signedIn: false; host: string; user: null }
 > = async function (ctx) {
 	const firebaseAdmin = initializeFirebaseAdmin();
 
-	const sessionCookie = getCookie<string>(
+	const sessionCookie = await getCookie<string>(
 		ctx.req,
 		ctx.res,
 		SESSION_COOKIE_NAME
@@ -251,7 +248,8 @@ export const getServerSideProps: GetServerSideProps<
 		return {
 			props: {
 				signedIn: true,
-				user: user,
+				user: { uid: user.uid, email: user.email || '' },
+				host: ctx.req.headers.host || '',
 			},
 		};
 	} catch {
@@ -259,6 +257,7 @@ export const getServerSideProps: GetServerSideProps<
 			props: {
 				signedIn: false,
 				user: null,
+				host: ctx.req.headers.host || '',
 			},
 		};
 	}

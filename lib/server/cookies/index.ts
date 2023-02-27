@@ -3,7 +3,7 @@ import { IncomingMessage, ServerResponse } from 'http';
 
 import { COOKIE_MAX_AGE_MILLIS } from '~/lib/common/constants';
 
-export const getCookie = <T>(
+export const getCookie = async <T>(
 	req: IncomingMessage,
 	res: ServerResponse,
 	name: string
@@ -15,18 +15,25 @@ export const getCookie = <T>(
 		: undefined;
 };
 
-export const setCookie = <T>(
+export const setCookie = async <T>(
 	req: IncomingMessage,
 	res: ServerResponse,
 	name: string,
 	value: T
 ) => {
 	const cookie = new Cookies(req, res);
-	const val = value
-		? Buffer.from(JSON.stringify(value)).toString('base64')
-		: undefined;
+	const val =
+		value == null
+			? undefined
+			: Buffer.from(JSON.stringify(value)).toString('base64');
 
-	cookie.set(name, val, { path: '/', maxAge: COOKIE_MAX_AGE_MILLIS });
+	cookie.set(name, val, {
+		path: '/',
+		maxAge: COOKIE_MAX_AGE_MILLIS,
+		overwrite: true,
+		httpOnly: true,
+		sameSite: 'strict',
+	});
 };
 
 export const deleteCookie = (

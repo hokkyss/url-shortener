@@ -14,7 +14,11 @@ import { setCookie } from '~/lib/server/cookies';
 import { createCsrfToken, getSecret } from '~/lib/server/csrf';
 import { initializeFirebaseAdmin } from '~/lib/server/firebase';
 
-const handler: NextApiHandler<{ detail: string }> = async (req, res) => {
+export type LoginApiResponse = {
+	detail: string | { sessionCookie: string; csrfToken: string };
+};
+
+const handler: NextApiHandler<LoginApiResponse> = async (req, res) => {
 	if (req.method !== 'POST') {
 		return res.redirect('/api/not-found');
 	}
@@ -52,10 +56,18 @@ const handler: NextApiHandler<{ detail: string }> = async (req, res) => {
 		getSecret(),
 	]);
 
-	await saveCsrfSecrets(csrfSecret, sessionCookie);
-	setCookie(req, res, SESSION_COOKIE_NAME, sessionCookie);
-	setCookie(req, res, CSRF_COOKIE_NAME, createCsrfToken(csrfSecret));
-	return res.status(200).json({ detail: 'OK' });
+	await Promise.all([
+		saveCsrfSecrets(csrfSecret, sessionCookie),
+		setCookie(req, res, SESSION_COOKIE_NAME, sessionCookie),
+		setCookie(req, res, CSRF_COOKIE_NAME, createCsrfToken(csrfSecret)),
+	]);
+
+	return res.status(200).json({
+		detail: {
+			sessionCookie: sessionCookie,
+			csrfToken: await createCsrfToken(csrfSecret),
+		},
+	});
 };
 
 export default handler;

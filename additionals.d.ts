@@ -1,3 +1,9 @@
+declare namespace NodeJS {
+	declare interface ProcessEnv {
+		readonly NEXT_PUBLIC_BASE_URL: string;
+	}
+}
+
 declare interface ShortenedLink {
 	clicks: number;
 	createdAt: Date;
@@ -8,6 +14,11 @@ declare interface ShortenedLink {
 }
 
 declare interface AccessToken {
-	customToken: string
-	used: boolean
+	customToken: string;
+	used: boolean;
+}
+
+declare interface User {
+	uid: string;
+	email: string;
 }
