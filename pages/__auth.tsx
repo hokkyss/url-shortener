@@ -6,10 +6,12 @@ import type {
 } from 'next';
 import dynamic from 'next/dynamic';
 import CircularProgress from '@mui/material/CircularProgress';
+import { serverSideSignIn } from 'next-firebase-session-auth';
+import { signInWithCustomToken } from 'firebase/auth';
 
-import { signIn } from '~/lib/server/api';
-import { setCookie } from '~/lib/server/cookies';
-import { CSRF_COOKIE_NAME, SESSION_COOKIE_NAME } from '~/lib/common/constants';
+import { getCustomToken } from '~/lib/common/api';
+import { initializeFirebaseAdmin } from '~/lib/server/firebase';
+import { initializeFirebaseClient } from '~/lib/common/firebase';
 
 const Box = dynamic(() => import('@mui/material/Box'));
 
@@ -41,23 +43,14 @@ export const getServerSideProps: GetServerSideProps = async function (ctx) {
 		};
 	}
 
-	const signInResponse = await signIn(accessToken);
-	if (typeof signInResponse.detail !== 'string') {
-		await Promise.all([
-			setCookie(
-				ctx.req,
-				ctx.res,
-				SESSION_COOKIE_NAME,
-				signInResponse.detail.sessionCookie
-			),
-			setCookie(
-				ctx.req,
-				ctx.res,
-				CSRF_COOKIE_NAME,
-				signInResponse.detail.csrfToken
-			),
-		]);
-	}
+	const customToken = await getCustomToken(accessToken);
+	await serverSideSignIn(
+		ctx.req,
+		ctx.res,
+		(auth) => signInWithCustomToken(auth, customToken),
+		initializeFirebaseAdmin(),
+		initializeFirebaseClient()
+	);
 
 	return {
 		redirect: {

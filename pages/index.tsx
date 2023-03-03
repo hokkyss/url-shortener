@@ -1,9 +1,5 @@
 import * as React from 'react';
-import type {
-	GetServerSideProps,
-	InferGetServerSidePropsType,
-	NextPage,
-} from 'next';
+import type { InferGetServerSidePropsType, NextPage } from 'next';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
 import NextLink from 'next/link';
@@ -12,7 +8,6 @@ import Link from '@mui/material/Link';
 import CircularProgress from '@mui/material/CircularProgress';
 import Snackbar from '@mui/material/Snackbar';
 import Alert, { AlertProps } from '@mui/material/Alert';
-import * as admin from 'firebase-admin';
 
 const InputAdornment = dynamic(() => import('@mui/material/InputAdornment'));
 const TextField = dynamic(() => import('@mui/material/TextField'));
@@ -24,13 +19,12 @@ const Box = dynamic(() => import('@mui/material/Box'));
 import styles from '~/styles/Home.module.css';
 
 import { shortenLink, signOut } from '~/lib/common/api';
-import { SESSION_COOKIE_NAME } from '~/lib/common/constants';
-import { getCookie } from '~/lib/server/cookies';
 import { initializeFirebaseAdmin } from '~/lib/server/firebase';
+import { withServerSideUser } from 'next-firebase-session-auth';
 
 const Home: NextPage<
 	InferGetServerSidePropsType<typeof getServerSideProps>
-> = ({ signedIn, user, host }) => {
+> = ({ isSignedIn, user, host }) => {
 	const [signingOut, setSigningOut] = React.useState(false);
 	const [destination, setDestination] = React.useState('');
 	const [shortLink, setShortLink] = React.useState('');
@@ -114,7 +108,7 @@ const Home: NextPage<
 				<Typography textAlign="center" variant="h3">
 					by hokkyss
 				</Typography>
-				{signedIn ? (
+				{isSignedIn ? (
 					<React.Fragment>
 						<Typography textAlign="center" sx={{ marginY: 2 }}>
 							Signed in as {user.email}
@@ -150,7 +144,7 @@ const Home: NextPage<
 					</React.Fragment>
 				)}
 			</Container>
-			{signedIn && (
+			{isSignedIn && (
 				<Box
 					sx={{
 						backgroundColor: 'black',
@@ -226,41 +220,15 @@ const Home: NextPage<
 	);
 };
 
-export const getServerSideProps: GetServerSideProps<
-	| { signedIn: true; host: string; user: User }
-	| { signedIn: false; host: string; user: null }
-> = async function (ctx) {
-	const firebaseAdmin = initializeFirebaseAdmin();
-
-	const sessionCookie = await getCookie<string>(
-		ctx.req,
-		ctx.res,
-		SESSION_COOKIE_NAME
-	);
-
-	try {
-		const decoded = await admin
-			.auth(firebaseAdmin)
-			.verifySessionCookie(sessionCookie || '');
-
-		const user = await admin.auth(firebaseAdmin).getUser(decoded.uid);
-
+export const getServerSideProps = withServerSideUser<{ host: string }>(
+	async function (ctx) {
 		return {
 			props: {
-				signedIn: true,
-				user: { uid: user.uid, email: user.email || '' },
 				host: ctx.req.headers.host || '',
 			},
 		};
-	} catch {
-		return {
-			props: {
-				signedIn: false,
-				user: null,
-				host: ctx.req.headers.host || '',
-			},
-		};
-	}
-};
+	},
+	initializeFirebaseAdmin()
+);
 
 export default Home;

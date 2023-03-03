@@ -17,6 +17,8 @@ import '@fontsource/public-sans';
 import '~/styles/globals.css';
 
 import { initializeFirebaseClient } from '~/lib/common/firebase';
+import { setConfig } from 'next-firebase-session-auth';
+import { CSRF_COOKIE_NAME, SESSION_COOKIE_NAME } from '~/lib/common/constants';
 
 const CustomPerformanceProvider = dynamic(
 	() => import('~/contexts/PerformanceProvider')
@@ -25,6 +27,13 @@ const CustomAnalyticsProvider = dynamic(
 	() => import('~/contexts/AnalyticsProvider')
 );
 const CustomAuthProvider = dynamic(() => import('~/contexts/AuthProvider'));
+
+setConfig({
+	csrfCookieName: CSRF_COOKIE_NAME,
+	csrfSecretCollectionName: 'csrfSecrets',
+	maxAge: 14 * 24 * 60 * 60 * 1000,
+	sessionCookieName: SESSION_COOKIE_NAME,
+});
 
 const MyApp: AppType = function MyApp({ Component, pageProps }) {
 	const firebaseApp = React.useMemo(initializeFirebaseClient, []);
