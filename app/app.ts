@@ -34,7 +34,7 @@ app.use(linkRoute)
 app.use('*', (_req, res) => {
   return res
     .status(StatusCodes.NOT_FOUND)
-    .json({ details: ErrorCodes.NotFound })
+    .json({ message: ErrorCodes.NotFound })
 })
 // #endregion
 
@@ -42,11 +42,11 @@ app.use(
   async (err: unknown, _req: Request, res: Response, _next: NextFunction) => {
     loggerService.error(err)
     if (createHttpError.isHttpError(err)) {
-      return res.status(err.statusCode).json({ details: err.message })
+      return res.status(err.statusCode).json({ message: err.message })
     }
     return res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ details: ErrorCodes.InternalServerError })
+      .json({ message: ErrorCodes.InternalServerError })
   }
 )
 
