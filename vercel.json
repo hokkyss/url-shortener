@@ -1,6 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "yarn build",
   "cleanUrls": true,
+  "devCommand": null,
+  "installCommand": "yarn install",
   "public": false,
   "rewrites": [
     {
