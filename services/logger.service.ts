@@ -19,4 +19,11 @@ if (envConfig.dev) {
   )
 }
 
+export interface ILoggerService {
+  debug: (message: unknown) => void
+  error: (message: unknown) => void
+  info: (message: unknown) => void
+  warn: (message: unknown) => void
+}
+
 export default loggerService

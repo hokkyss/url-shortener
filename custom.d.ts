@@ -1,5 +1,2 @@
-declare namespace Express {
-  interface Request {
-    user: Record<string, unknown> | null
-  }
-}
+/// <reference types="./types/env" />
+/// <reference types="./types/express" />

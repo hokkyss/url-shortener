@@ -7,7 +7,7 @@ import { StatusCodes } from 'http-status-codes'
 
 import envConfig from './config/env.config'
 import ErrorCodes from './constants/error.constant'
-import authRoute from './routes/auth.route'
+import linkRoute from './routes/link.route'
 import loggerService from './services/logger.service'
 
 const app = express()
@@ -27,23 +27,29 @@ app.use((req, _res, next) => {
   return next()
 })
 
-app.use('api/v1/auth', authRoute)
+// #region ROUTES
+app.use(linkRoute)
+// #endregion
 
+// #region NOT-FOUND handler
 app.use('*', (_req, res) => {
   return res
     .status(StatusCodes.NOT_FOUND)
     .json({ details: ErrorCodes.NotFound })
 })
+// #endregion
 
-app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
-  loggerService.error(err)
-  if (createHttpError.isHttpError(err)) {
-    return res.status(err.statusCode).json({ details: err.message })
+app.use(
+  async (err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+    loggerService.error(err)
+    if (createHttpError.isHttpError(err)) {
+      return res.status(err.statusCode).json({ details: err.message })
+    }
+    return res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ details: ErrorCodes.InternalServerError })
   }
-  return res
-    .status(StatusCodes.INTERNAL_SERVER_ERROR)
-    .json({ details: ErrorCodes.InternalServerError })
-})
+)
 
 app.listen(envConfig.port)
 
