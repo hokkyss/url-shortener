@@ -4,6 +4,7 @@
   "cleanUrls": true,
   "devCommand": null,
   "installCommand": "yarn install",
+  "outputDirectory": "build",
   "public": false,
   "rewrites": [
     {
